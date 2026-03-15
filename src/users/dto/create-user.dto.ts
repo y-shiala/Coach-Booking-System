@@ -1,10 +1,7 @@
-import { IsString, IsEmail, IsEnum, IsOptional, IsNumber, IsObject, ValidateNested } from 'class-validator';
+import { IsString, IsEmail, IsEnum, IsOptional, IsNumber, IsObject, ValidateNested, MinLength } from 'class-validator';
 import { Type } from 'class-transformer';
-
-export enum UserRole {
-  COACH = 'coach',
-  CUSTOMER = 'customer',
-}
+import { UserRole } from '../../common/enums/user-role.enums';
+import { IsStrongPassword } from 'class-validator';
 
 class AvailabilityDto {
   @IsOptional()
@@ -43,6 +40,11 @@ export class CreateUserDto {
   @IsEmail()
   email: string;
 
+  @IsString()
+  @MinLength(6)
+  password: string;
+
+
   @IsEnum(UserRole)
   role: UserRole;
 
@@ -55,7 +57,6 @@ export class CreateUserDto {
   price_per_hour?: number;
 
   @IsOptional()
-  @ValidateNested()
-  @Type(() => AvailabilityDto)
-  availability?: AvailabilityDto;
+  @IsObject()
+  availability?: Record<string, string[]>;
 }

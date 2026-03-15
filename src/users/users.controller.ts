@@ -10,12 +10,7 @@ export class UsersController {
 
   @Post()
   async create(@Body() createUserDto: CreateUserDto): Promise<User> {
-    // Transform availability if present
-    let createData: any = { ...createUserDto };
-    if (createUserDto.availability) {
-      createData.availability = new Map<string, string[]>(Object.entries(createUserDto.availability));
-    }
-    return this.usersService.create(createData);
+    return this.usersService.create(createUserDto);
   }
 
   @Get()
@@ -30,12 +25,7 @@ export class UsersController {
 
   @Put(':id')
   async update(@Param('id') id: string, @Body() updateUserDto: UpdateUserDto): Promise<User> {
-    // Transform availability if present
-    let updateData: any = { ...updateUserDto };
-    if (updateUserDto.availability) {
-      updateData.availability = new Map<string, string[]>(Object.entries(updateUserDto.availability));
-    }
-    return this.usersService.update(id, updateData);
+    return this.usersService.update(id, updateUserDto);
   }
 
   @Delete(':id')
