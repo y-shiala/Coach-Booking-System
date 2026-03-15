@@ -33,8 +33,8 @@ export interface Service {
 
 export interface TimeSlot {
   day: 'monday' | 'tuesday' | 'wednesday' | 'thursday' | 'friday' | 'saturday' | 'sunday';
-  startTime: string; // HH:mm format
-  endTime: string; // HH:mm format
+  startTime: string; 
+  endTime: string;  
 }
 
 export interface Availability {

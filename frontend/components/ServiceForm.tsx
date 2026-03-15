@@ -50,7 +50,7 @@ export function ServiceForm({ onSuccess }: ServiceFormProps) {
         description: data.description,
         duration: data.duration,
         price: data.price,
-        staffId: user?.id,
+        
       });
 
       toast.success('Service created successfully');

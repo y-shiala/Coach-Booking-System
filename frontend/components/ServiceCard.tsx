@@ -27,9 +27,9 @@ export function ServiceCard({ service, actionButton }: ServiceCardProps) {
         <CardDescription className="line-clamp-2">{service.description}</CardDescription>
       </CardHeader>
       <CardContent className="flex-1 flex flex-col justify-between space-y-4">
-        {/* Details */}
+        
         <div className="space-y-3">
-          {/* Coach Name */}
+          
           {coach && (
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
