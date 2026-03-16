@@ -63,4 +63,29 @@ export class MailService {
       `,
     });
   }
+
+  async sendBookingCancellation(
+  customerEmail: string,
+  customerName: string,
+  coachEmail: string,
+  coachName: string,
+  serviceName: string,
+  startTime: Date,
+) {
+ 
+  await this.mailerService.sendMail({
+    to: customerEmail,
+    subject: 'Booking Cancelled',
+    template: './booking-cancelled', // or inline HTML
+    context: { customerName, coachName, serviceName, startTime },
+  });
+
+
+  await this.mailerService.sendMail({
+    to: coachEmail,
+    subject: 'Booking Cancelled',
+    template: './booking-cancelled',
+    context: { customerName, coachName, serviceName, startTime },
+  });
+}
 }

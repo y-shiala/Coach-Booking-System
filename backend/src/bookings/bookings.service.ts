@@ -5,6 +5,7 @@ import { Booking, BookingDocument } from './schemas/booking.schema';
 import { CreateBookingDto } from './dto/create-booking.dto';
 import { ServicesService } from '../services/services.service';
 import { MailService } from '../mail/mail.service';
+import { ForbiddenException } from '@nestjs/common';
 
 @Injectable()
 export class BookingsService {
@@ -15,14 +16,33 @@ export class BookingsService {
     private mailService: MailService, 
   ) {}
 
-  async findAll() {
-    return this.bookingModel
-      .find()
-      .populate('customerId', 'name email')
-      .populate('serviceId', 'name duration price')
-      .populate('staffId', 'name email')
-      .exec();
+ async findAll(userId: string, role: string) {
+  if (role === 'customer') {
+    return this.findByUser(userId);
+  } else if (role === 'coach') {
+    return this.findByCoach(userId);
   }
+  return [];
+}
+
+
+async findByUser(customerId: string) {
+  return this.bookingModel
+    .find({ customerId })
+    .populate('customerId', 'name email')
+    .populate('serviceId', 'name duration price')
+    .populate('staffId', 'name email')
+    .exec();
+}
+
+async findByCoach(staffId: string) {
+  return this.bookingModel
+    .find({ staffId })
+    .populate('customerId', 'name email')
+    .populate('serviceId', 'name duration price')
+    .populate('staffId', 'name email')
+    .exec();
+}
 
   async findOne(id: string) {
     if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid booking ID');
@@ -147,4 +167,53 @@ export class BookingsService {
     if (!booking) throw new NotFoundException('Booking not found');
     return booking;
   }
+
+  async cancelBooking(id: string, userId: string, role: string) {
+  if (!Types.ObjectId.isValid(id)) throw new NotFoundException('Invalid booking ID');
+
+  const booking = await this.bookingModel
+    .findById(id)
+    .populate('customerId', 'name email')
+    .populate('serviceId', 'name duration price')
+    .populate('staffId', 'name email')
+    .exec();
+
+  if (!booking) throw new NotFoundException('Booking not found');
+  if (booking.status === 'cancelled') throw new ConflictException('Booking already cancelled');
+  if (booking.status === 'completed') throw new ForbiddenException('Cannot cancel a completed booking');
+
+
+  const customerId = (booking.customerId as any)?.id?.toString() || booking.customerId.toString();
+  const staffId = (booking.staffId as any)?.id?.toString() || booking.staffId.toString();
+
+  if (role === 'customer' && customerId !== userId) {
+    throw new ForbiddenException('You can only cancel your own bookings');
+  }
+  if (role === 'coach' && staffId !== userId) {
+    throw new ForbiddenException('You can only cancel bookings for your own services');
+  }
+
+  booking.status = 'cancelled';
+  await booking.save();
+
+  // Send cancellation email
+  const customer = booking.customerId as any;
+  const coach = booking.staffId as any;
+  const service = booking.serviceId as any;
+
+  try {
+    await this.mailService.sendBookingCancellation(
+      customer.email,
+      customer.name,
+      coach.email,
+      coach.name,
+      service.name,
+      booking.startTime,
+    );
+  } catch (error) {
+    console.error('Failed to send cancellation email:', error);
+  }
+
+  return booking;
+}
 }
