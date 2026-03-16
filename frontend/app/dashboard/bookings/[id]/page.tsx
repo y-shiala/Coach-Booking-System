@@ -9,12 +9,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Booking } from '@/lib/types';
 import { apiClient } from '@/lib/api';
 import { StatusBadge } from '@/components/StatusBadge';
+import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 export default function BookingDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { user } = useAuth();
   const bookingId = params.id as string;
 
   const [booking, setBooking] = useState<Booking | null>(null);
@@ -42,7 +44,7 @@ export default function BookingDetailPage() {
     if (!booking) return;
     try {
       setIsCancelling(true);
-      await apiClient.put(`/bookings/${booking.id}`, { status: 'cancelled' });
+      await apiClient.put(`/bookings/${booking.id}/cancel`, {});
       toast.success('Booking cancelled successfully');
       router.push('/dashboard/bookings');
     } catch (error: any) {
@@ -51,6 +53,19 @@ export default function BookingDetailPage() {
       setIsCancelling(false);
     }
   };
+
+ 
+  const canCancel = (() => {
+    if (!booking || !user) return false;
+    if (booking.status === 'cancelled' || booking.status === 'completed') return false;
+
+    const customerId = (booking.customerId as any)?.id || booking.customerId?.toString();
+    const staffId = (booking.staffId as any)?.id || booking.staffId?.toString();
+
+    if (user.role === 'customer') return customerId === user.id;
+    if (user.role === 'coach') return staffId === user.id;
+    return false;
+  })();
 
   if (isLoading) {
     return (
@@ -79,7 +94,6 @@ export default function BookingDetailPage() {
     );
   }
 
-  // 👇 Handle populated fields from backend
   const service = booking.serviceId as any;
   const coach = booking.staffId as any;
   const customer = booking.customerId as any;
@@ -186,18 +200,26 @@ export default function BookingDetailPage() {
             </div>
           )}
 
-          {/* Actions */}
-          {booking.status !== 'cancelled' && booking.status !== 'completed' && (
+          {/* Cancel Action */}
+          {canCancel && (
             <div className="border-t pt-6 flex gap-3">
               <Button
                 variant="destructive"
                 onClick={handleCancel}
                 disabled={isCancelling}
               >
-                {isCancelling ? 'Cancelling...' : 'Cancel Booking'}
+                {isCancelling ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Cancelling...
+                  </>
+                ) : (
+                  'Cancel Booking'
+                )}
               </Button>
             </div>
           )}
+
         </CardContent>
       </Card>
     </div>

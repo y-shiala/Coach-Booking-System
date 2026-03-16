@@ -40,7 +40,7 @@ export default function BookingsPage() {
 
   const handleCancel = async (id: string) => {
     try {
-      await apiClient.put(`/bookings/${id}`, { status: "cancelled" });
+      await apiClient.put(`/bookings/${id}/cancel`, {});
       toast.success("Booking cancelled");
       loadBookings();
     } catch (error: any) {
@@ -55,10 +55,12 @@ export default function BookingsPage() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight">Bookings</h1>
           <p className="text-muted-foreground mt-1">
-            Manage all your coaching bookings
+            {user?.role === "coach"
+              ? "Manage bookings for your services"
+              : "View and manage your bookings"}
           </p>
         </div>
-        {user?.role === "coach" && (
+        {user?.role === "customer" && (
           <Button asChild size="lg">
             <Link href="/dashboard/bookings/new">
               <Plus className="mr-2 h-4 w-4" />
@@ -71,14 +73,21 @@ export default function BookingsPage() {
       {/* Bookings Card */}
       <Card>
         <CardHeader>
-          <CardTitle>All Bookings</CardTitle>
-          <CardDescription>View and manage your bookings</CardDescription>
+          <CardTitle>
+            {user?.role === "coach" ? "Your Service Bookings" : "My Bookings"}
+          </CardTitle>
+          <CardDescription>
+            {user?.role === "coach"
+              ? "All bookings made for your services"
+              : "All your upcoming and past bookings"}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <BookingsTable
             bookings={bookings}
             isLoading={isLoading}
             onCancel={handleCancel}
+            userRole={user?.role}
           />
         </CardContent>
       </Card>
